@@ -1,0 +1,31 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+main {
+  min-height: calc(100vh - 140px);
+}
+
+.app-header {
+  background: linear-gradient(90deg, #1a2a6c 0%, #b21f1f 50%, #fdbb2d 100%);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  position: relative;
+}
+
+.app-title {
+  font-weight: bold;
+  transition: transform 0.2s ease;
+}
+
+.app-title:hover {
+  transform: scale(1.05);
+}
+
+footer {
+  margin-top: auto;
+}
