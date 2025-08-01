@@ -1,5 +1,4 @@
-﻿
-namespace AutoDocAi.Database.Entities;
+﻿namespace AutoDocAi.Database.Entities;
 
 public class Document
 {
