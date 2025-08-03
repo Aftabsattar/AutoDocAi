@@ -130,7 +130,7 @@ public class DocumentController : ControllerBase
             Data = structuredJsonDict
         };
         await _appDbContext.Documents.AddAsync(document);
-        _appDbContext.SaveChanges();
+        await _appDbContext.SaveChangesAsync();
         return Ok("Data saved successfully");
     }
 }
