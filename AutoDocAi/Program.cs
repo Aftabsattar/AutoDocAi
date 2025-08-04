@@ -10,6 +10,7 @@ var config = builder.Configuration;
 // Add services to the container.
 builder.Services.AddSingleton<IDocumentProcessingRepository, DocumentProcessingRepository>();
 builder.Services.AddHttpClient<IStructuredJsonRepository, StructuredJsonRepository>();
+builder.Services.AddSingleton<IQueryProcessingRepository, QueryProcessingRepository>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

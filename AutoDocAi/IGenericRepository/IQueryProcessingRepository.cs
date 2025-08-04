@@ -1,6 +1,6 @@
-﻿namespace AutoDocAi.IGenericRepository
+﻿namespace AutoDocAi.IGenericRepository;
+
+public interface IQueryProcessingRepository
 {
-    public interface IQueryProcessingRepository
-    {
-    }
+    Task<string> GetQueryProcessingResult(string query);
 }

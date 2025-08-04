@@ -14,10 +14,12 @@ public class DocumentController : ControllerBase
     private readonly AppDbContext _appDbContext;
     private readonly IDocumentProcessingRepository _docClient;
     private readonly IStructuredJsonRepository _structuredJsonRepository;
-    public DocumentController(AppDbContext appDbContext, IDocumentProcessingRepository docClient, IStructuredJsonRepository structuredJsonRepository)
+    private readonly IQueryProcessingRepository _queryProcessingRepository;
+    public DocumentController(AppDbContext appDbContext, IDocumentProcessingRepository docClient, IStructuredJsonRepository structuredJsonRepository, IQueryProcessingRepository queryProcessingRepository)
     {
         _appDbContext = appDbContext;
         _docClient = docClient;
+        _queryProcessingRepository= queryProcessingRepository;
         _structuredJsonRepository = structuredJsonRepository;
     }
 
@@ -133,4 +135,21 @@ public class DocumentController : ControllerBase
         await _appDbContext.SaveChangesAsync();
         return Ok("Data saved successfully");
     }
+     [HttpPost("query")]
+     public async Task<IActionResult> QueryProcessing(string query)
+        {
+            if (string.IsNullOrEmpty(query))
+            {
+                return BadRequest(new { message = "Query cannot be null or empty" });
+            }
+
+            var result = await _queryProcessingRepository.GetQueryProcessingResult(query);
+        if (result == null)
+        {
+            return NotFound(new { message = "No results found for the query" });
+        }
+
+        return Ok(new { result });
+    }
+
 }
