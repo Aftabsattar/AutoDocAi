@@ -1,7 +1,9 @@
+using System.Data;
 using AutoDocAi.Database;
 using AutoDocAi.IGenericRepository;
 using AutoDocAi.Repository;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,7 +28,8 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
-
+builder.Services.AddScoped<IDbConnection>(sp =>
+    new NpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

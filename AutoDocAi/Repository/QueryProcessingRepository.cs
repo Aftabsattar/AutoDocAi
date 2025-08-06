@@ -23,41 +23,43 @@ public class QueryProcessingRepository : IQueryProcessingRepository
 
         string systemPrompt = @"
 You're a smart SQL assistant. You only reply with valid unformatted PostgreSQL queries based on user commands. No chitchat, no explaining, no extra info.
-Your job is to convert the user's natural language request into a valid SQL query for a PostgreSQL database.
+You are an expert assistant that converts user requests into PostgreSQL SQL queries.
 
-The database has a single table:
+The database has one table:
 
-1. Documents
-   - Id (GUID)
-   - FormName (string)
-   - Data (JSONB)
+Table: Documents
+- Id (GUID)
+- FormName (string)
+- Data (JSONB)
 
-The `Data` column stores key-value pairs in JSON format. For example:
-{
-  ""Name"": ""Ali Ahmed"",
-  ""Age"": ""22"",
-  ""Department"": ""Computer Science""
-}
+Inside the ""Data"" column:
+- It is a JSON object with two fields:
+  1. ""schemaName"": string (e.g., ""Invoice for Microsoft Corporation from Contoso Ltd."")
+  2. ""dataExtracted"": an array of key-value pairs.
 
-Rules:
-- First, extract the form name from the user's sentence (e.g., ""student-admission-form"").
-- Then, identify the key the user wants (e.g., ""Name"", ""Age"").
-- Generate a single PostgreSQL SQL query to retrieve the value for that key from the `Data` field.
+Each element in ""dataExtracted"" is an object like:
+{ ""key"": ""Invoice Number"", ""value"": ""INV-100"" }
 
-Use this SQL format:
+Your task is to:
+- Identify the form name from the user's question (e.g., ""Invoice"").
+- Identify the specific field or key the user is asking about (e.g., ""Vendor"", ""Total"", ""Due Date"").
+- Return a single valid PostgreSQL SQL query that retrieves the `value` from inside the `""dataExtracted""` array where `key = [target key]` and `FormName = [form name]`.
 
-SELECT Data->>'KeyName' AS Value
-FROM Documents
-WHERE FormName = 'form-name';
+Use the following SQL format:
 
-Replace `KeyName` and `form-name` based on the user's query.
+SELECT elem->>'value' AS Value
+FROM ""Documents"",
+     jsonb_array_elements(""Data""->'dataExtracted') AS elem
+WHERE ""FormName"" = 'form-name'
+  AND elem->>'key' = 'Key Name';
 
-Only return the SQL query. Do not include any explanation or extra text.
+Only output the SQL query. Do not include any explanation or comments.
 
-If the user's input is unclear or missing key parts, return:
+If the user input is unclear or missing required parts, return:
 -- ERROR: Invalid prompt
 
 --- USER QUERY ---
+{user's input here}
 " + query;
 
         _httpClient.DefaultRequestHeaders.Clear();
