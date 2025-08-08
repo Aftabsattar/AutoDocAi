@@ -1,6 +1,8 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Data;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using AutoDocAi.Database;
 using AutoDocAi.IGenericRepository;
 
 namespace AutoDocAi.Repository;
@@ -9,57 +11,74 @@ public class QueryProcessingRepository : IQueryProcessingRepository
 {
     private readonly IConfiguration _config;
     private readonly HttpClient _httpClient;
+    private readonly IDbConnection _dbConnection;
 
-    public QueryProcessingRepository(IConfiguration config, HttpClient httpClient)
+    public QueryProcessingRepository(IConfiguration config, HttpClient httpClient,IDbConnection dbConnection)
     {
         _config = config;
         _httpClient = httpClient;
+        _dbConnection = dbConnection;
     }
-
     public async Task<string> GetQueryProcessingResult(string query)
     {
         var openAiEndpoint = _config["OpenAi:Endpoint"];
         var openAiApiKey = _config["OpenAi:ApiKey"];
 
+        //========
+        string sql = @"
+        SELECT 
+           ""Data""->> 'schemaName' AS schema_name
+          FROM 
+           ""Documents""";
+        if (_dbConnection.State != ConnectionState.Open)
+        {
+            _dbConnection.Open();
+        }
+        var ListSchemaName = await _dbConnection.QueryAsync<string>(sql);
+        var schemaNamesString = string.Join("\n- ", ListSchemaName);
         string systemPrompt = @"
-You're a smart SQL assistant. You only reply with valid unformatted PostgreSQL queries based on user commands. No chitchat, no explaining, no extra info.
-You are an expert assistant that converts user requests into PostgreSQL SQL queries.
+You are an expert AI system that converts natural language into SQL queries for a PostgreSQL database containing dynamic form-based data.
 
-The database has one table:
+Database Table: Documents  
+Columns:
+- Id: Integer (Primary Key)
+- FormName: Text (original uploaded filename)
+- Data: JSONB containing structured form content
 
-Table: Documents
-- Id (GUID)
-- FormName (string)
-- Data (JSONB)
+Structure of the `Data` column:
+- ""schemaName"": a string indicating the type of form
+- ""dataExtracted"": an array of objects in the format:  
+  { ""key"": ""<field name>"", ""value"": ""<field value>"" }
 
-Inside the ""Data"" column:
-- It is a JSON object with two fields:
-  1. ""schemaName"": string (e.g., ""Invoice for Microsoft Corporation from Contoso Ltd."")
-  2. ""dataExtracted"": an array of key-value pairs.
+You can use either:
+- `jsonb_array_elements(Data->'dataExtracted') AS elem` for traditional joins
+- OR `jsonb_path_query_first(Data, '$.dataExtracted[*] ? (@.key == ""<field name>"")') -> 'value' ->> 0` for precise field access
 
-Each element in ""dataExtracted"" is an object like:
-{ ""key"": ""Invoice Number"", ""value"": ""INV-100"" }
+Instructions:
+1. Analyze the user query and map it to the correct schema name from the list below.
+2. Generate a valid SQL query that:
+   - Filters using `Data->>'schemaName' = '<matched schema name>'`
+   - Extracts fields using the appropriate JSONB technique
+   - Counts records using `COUNT(*)` when applicable
+3. Only use exact field names that exist in the schema.
+4. Always alias the final output column clearly.
+5. Do not include explanation, markdown, or extra formatting. Return only the final SQL query.
 
-Your task is to:
-- Identify the form name from the user's question (e.g., ""Invoice"").
-- Identify the specific field or key the user is asking about (e.g., ""Vendor"", ""Total"", ""Due Date"").
-- Return a single valid PostgreSQL SQL query that retrieves the `value` from inside the `""dataExtracted""` array where `key = [target key]` and `FormName = [form name]`.
+---
 
-Use the following SQL format:
+Current Schema Names:
+- University Admission Performa  
+- Invoice for Microsoft Corporation  
+- Invoice for Microsoft Corporation from Contoso Ltd.  
+- Invoice for Random Corporation  
+- Resume Information
 
-SELECT elem->>'value' AS Value
-FROM ""Documents"",
-     jsonb_array_elements(""Data""->'dataExtracted') AS elem
-WHERE ""FormName"" = 'form-name'
-  AND elem->>'key' = 'Key Name';
+User Query:
+{{schemaNamesString}}
 
-Only output the SQL query. Do not include any explanation or comments.
+---
+Return only the corresponding SQL query.
 
-If the user input is unclear or missing required parts, return:
--- ERROR: Invalid prompt
-
---- USER QUERY ---
-{user's input here}
 " + query;
 
         _httpClient.DefaultRequestHeaders.Clear();

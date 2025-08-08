@@ -9,16 +9,29 @@ var builder = WebApplication.CreateBuilder(args);
 
 var config = builder.Configuration;
 
-// Add services to the container.
-builder.Services.AddSingleton<IDocumentProcessingRepository, DocumentProcessingRepository>();
-builder.Services.AddHttpClient<IStructuredJsonRepository, StructuredJsonRepository>();
-builder.Services.AddSingleton<IQueryProcessingRepository, QueryProcessingRepository>();
+// Register HttpClient factory
+builder.Services.AddHttpClient(); // <-- This is needed
+
+// Add services to the container
+builder.Services.AddScoped<IDocumentProcessingRepository, DocumentProcessingRepository>();
+builder.Services.AddScoped<IStructuredJsonRepository, StructuredJsonRepository>();
+builder.Services.AddScoped<IQueryProcessingRepository, QueryProcessingRepository>();
+
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+// Swagger/OpenAPI setup
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// PostgreSQL via EF Core
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register IDbConnection for Dapper
+builder.Services.AddScoped<IDbConnection>(sp =>
+    new NpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// CORS Policy
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -28,21 +41,19 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
-builder.Services.AddScoped<IDbConnection>(sp =>
-    new NpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Development pipeline setup
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
