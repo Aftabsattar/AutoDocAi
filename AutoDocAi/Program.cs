@@ -16,6 +16,7 @@ builder.Services.AddHttpClient(); // <-- This is needed
 builder.Services.AddScoped<IDocumentProcessingRepository, DocumentProcessingRepository>();
 builder.Services.AddScoped<IStructuredJsonRepository, StructuredJsonRepository>();
 builder.Services.AddScoped<IQueryProcessingRepository, QueryProcessingRepository>();
+builder.Services.AddScoped<IGetResultFromDatabaseUsingQuery, GetResultFromDatabaseUsingQuery>();
 
 builder.Services.AddControllers();
 

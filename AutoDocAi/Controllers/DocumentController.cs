@@ -15,12 +15,14 @@ public class DocumentController : ControllerBase
     private readonly IDocumentProcessingRepository _docClient;
     private readonly IStructuredJsonRepository _structuredJsonRepository;
     private readonly IQueryProcessingRepository _queryProcessingRepository;
-    public DocumentController(AppDbContext appDbContext, IDocumentProcessingRepository docClient, IStructuredJsonRepository structuredJsonRepository, IQueryProcessingRepository queryProcessingRepository)
+    private readonly IGetResultFromDatabaseUsingQuery _generateDatabaseQuery;
+    public DocumentController(AppDbContext appDbContext, IDocumentProcessingRepository docClient, IStructuredJsonRepository structuredJsonRepository, IQueryProcessingRepository queryProcessingRepository,IGetResultFromDatabaseUsingQuery generateDatabaseQuery)
     {
         _appDbContext = appDbContext;
         _docClient = docClient;
         _queryProcessingRepository= queryProcessingRepository;
         _structuredJsonRepository = structuredJsonRepository;
+        _generateDatabaseQuery = generateDatabaseQuery;
     }
 
     [HttpPost("seed-document")]
@@ -143,13 +145,14 @@ public class DocumentController : ControllerBase
                 return BadRequest(new { message = "Query cannot be null or empty" });
             }
 
-            var result = await _queryProcessingRepository.GetQueryProcessingResult(query);
+        var generatedQuery = await _queryProcessingRepository.GetQueryProcessingResult(query);
+        var result = await _generateDatabaseQuery.GetResultFromDatabase(generatedQuery);
         if (result == null)
         {
-            return NotFound(new { message = "No results found for the query" });
+            return NotFound(new { message = "No results found from the query" });
         }
 
-        return Ok(new { result });
+        return Ok(new { generatedQuery });
     }
 
 }
