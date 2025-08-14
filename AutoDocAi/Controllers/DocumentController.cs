@@ -152,7 +152,6 @@ public class DocumentController : ControllerBase
             return NotFound(new { message = "No results found from the query" });
         }
 
-        return Ok(new { generatedQuery });
+        return Ok(new { result });
     }
-
 }
