@@ -1,171 +1,184 @@
 # AutoDocAi
 
-AutoDocAi is an advanced document management system built with ASP.NET Core and Entity Framework. This project provides an API for creating, retrieving, and managing documents with dynamic data storage capabilities. Its modular structure and use of modern technologies make it scalable and easy to integrate into existing systems.
+AutoDocAi is a lightweight, RESTful document management API built with ASP.NET Core 8 and Entity Framework Core. It enables you to create, retrieve, and manage documents that store flexible key–value data, backed by PostgreSQL and documented with Swagger.
 
 ---
 
 ## Features ✨
 
-- **Dynamic Document Management**: Create and manage documents with flexible key-value data storage.
-- **RESTful API**: Provides endpoints for interacting with documents.
-- **Entity Framework Core**: Seamless integration with PostgreSQL for database operations.
-- **Swagger Integration**: API documentation and testing built-in.
-- **Scalability**: Ready for modern .NET 8.0 applications.
+- Dynamic document storage using flexible key–value pairs
+- Clean REST API surface
+- Entity Framework Core + PostgreSQL integration
+- Built-in Swagger/OpenAPI for interactive docs and testing
+- .NET 8-ready with a simple, scalable architecture
 
 ---
 
 ## Technologies Used 🛠️
 
-- **C#** (100%)
-- **ASP.NET Core**: Backend framework.
-- **Entity Framework Core**: Database ORM.
-- **PostgreSQL**: Relational database.
-- **Swagger**: API documentation and testing.
+- C# (.NET 8)
+- ASP.NET Core (Web API)
+- Entity Framework Core
+- PostgreSQL
+- Swagger / Swashbuckle
 
 ---
 
 ## Project Structure 📂
 
-The repository is organized as follows:
-
 ```
 AutoDocAi/
 │
 ├── Controllers/            # API Controllers
-├── Database/               # Database Context and Entities
+├── Database/               # DbContext and Entities
 ├── DTOs/                   # Data Transfer Objects
+├── Migrations/             # EF Core Migrations
 ├── Properties/             # Project Properties
-├── Migrations/             # Entity Framework Migrations
-├── AutoDocAi.csproj        # Project File
-├── AutoDocAi.http          # HTTP Request Samples
-├── .gitignore              # Git Ignore Rules
-├── .gitattributes          # Git Attributes
-└── AutoDocAi.sln           # Visual Studio Solution File
+├── AutoDocAi.csproj        # Project file
+├── AutoDocAi.http          # Example HTTP requests for local testing
+├── .gitattributes
+├── .gitignore
+└── AutoDocAi.sln           # Solution file
 ```
 
 ---
 
-## Installation and Setup ⚙️
+## Getting Started ⚙️
 
 ### Prerequisites
 
-1. **.NET 8.0 SDK**: Make sure to install the latest .NET 8.0 SDK.
-2. **PostgreSQL**: Ensure PostgreSQL is installed and running.
+1. .NET 8.0 SDK
+2. PostgreSQL running locally or accessible remotely
+3. (Optional) EF Core CLI: `dotnet tool install --global dotnet-ef`
 
-### Steps to Run
+### 1) Clone the repository
 
-1. Clone the repository:
+```bash
+git clone https://github.com/Aftabsattar/AutoDocAi.git
+cd AutoDocAi
+```
 
-   ```bash
-   git clone https://github.com/Aftabsattar/AutoDocAi.git
-   cd AutoDocAi
-   ```
+### 2) Configure the connection string
 
-2. Update the database connection string in `appsettings.json`.
+Update appsettings.json with your PostgreSQL connection string:
 
-3. Apply migrations to the database:
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=autodocai;Username=postgres;Password=postgres"
+  }
+}
+```
 
-   ```bash
-   dotnet ef database update
-   ```
+Tip: You can also use user secrets or environment variables in production.
 
-4. Run the application:
+### 3) Apply database migrations
 
-   ```bash
-   dotnet run
-   ```
+```bash
+dotnet ef database update
+```
 
-5. Access the Swagger API documentation at:
+### 4) Run the application
 
-   ```
-   http://localhost:5235/swagger
-   ```
+```bash
+dotnet run
+```
 
----
+By default, Swagger UI is available at:
 
-## API Endpoints 🛠️
-
-Here are some of the key API endpoints:
-
-### 1. **Seed Document**
-   - **Endpoint**: `POST /api/Document/seed-document`
-   - **Description**: Create a new document.
-   - **Request Body**:
-     ```json
-     {
-       "FormName": "SampleForm",
-       "Data": {
-         "Key1": "Value1",
-         "Key2": "Value2"
-       }
-     }
-     ```
-   - **Response**:
-     ```json
-     {
-       "id": 1,
-       "message": "Document Saved Successfully"
-     }
-     ```
-
-### 2. **Get Document by Name**
-   - **Endpoint**: `GET /api/Document/by-name?formName={formName}`
-   - **Description**: Retrieve a document by its name.
-   - **Response**:
-     ```json
-     {
-       "id": 1,
-       "formName": "SampleForm",
-       "data": {
-         "Key1": "Value1",
-         "Key2": "Value2"
-       }
-     }
-     ```
-
-### 3. **Get All Documents**
-   - **Endpoint**: `GET /api/Document/get-all-documents`
-   - **Description**: Retrieve all documents.
-   - **Response**:
-     ```json
-     [
-       {
-         "id": 1,
-         "formName": "SampleForm",
-         "data": {
-           "Key1": "Value1",
-           "Key2": "Value2"
-         }
-       }
-     ]
-     ```
+```
+http://localhost:5235/swagger
+```
 
 ---
 
-## Development Setup 🖥️
+## API Reference 🛠️
 
-### HTTP Request Testing
+Base URL (local): `http://localhost:5235`
 
-A sample `.http` file (`AutoDocAi.http`) is included to test your API endpoints locally. Use tools like [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) in VS Code.
+### 1. Seed Document
+- Method: POST
+- Endpoint: `/api/Document/seed-document`
+- Description: Create and save a new document with flexible key–value data.
+- Request Body:
+  ```json
+  {
+    "FormName": "SampleForm",
+    "Data": {
+      "Key1": "Value1",
+      "Key2": "Value2"
+    }
+  }
+  ```
+- Response:
+  ```json
+  {
+    "id": 1,
+    "message": "Document Saved Successfully"
+  }
+  ```
+
+### 2. Get Document by Name
+- Method: GET
+- Endpoint: `/api/Document/by-name?formName={formName}`
+- Description: Retrieve a single document by its form name.
+- Example Response:
+  ```json
+  {
+    "id": 1,
+    "formName": "SampleForm",
+    "data": {
+      "Key1": "Value1",
+      "Key2": "Value2"
+    }
+  }
+  ```
+
+### 3. Get All Documents
+- Method: GET
+- Endpoint: `/api/Document/get-all-documents`
+- Description: Retrieve all documents.
+- Example Response:
+  ```json
+  [
+    {
+      "id": 1,
+      "formName": "SampleForm",
+      "data": {
+        "Key1": "Value1",
+        "Key2": "Value2"
+      }
+    }
+  ]
+  ```
+
+---
+
+## Development 🖥️
+
+- Swagger UI is enabled for testing and documentation.
+- A sample HTTP file is provided for quick local testing:
+  - Open `AutoDocAi.http` in VS Code with the REST Client extension.
+
+Useful commands:
+- Restore: `dotnet restore`
+- Build: `dotnet build`
+- Watch run: `dotnet watch`
 
 ---
 
 ## Contributing 🤝
 
-Contributions are welcome! Feel free to submit a pull request or open an issue to discuss improvements or new features.
+Contributions are welcome! Please open an issue to discuss changes or submit a pull request.
 
 ---
 
 ## License 📝
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
 ## Contact 📧
 
-For any inquiries or feedback, feel free to contact the repository owner at [Aftabsattar](https://github.com/Aftabsattar).
-
----
-
-This README provides an overview of the project, setup instructions, API details, and contribution guidelines. Let me know if you’d like to make any adjustments or additions!
+For questions or feedback, reach out to [Aftabsattar](https://github.com/Aftabsattar).
