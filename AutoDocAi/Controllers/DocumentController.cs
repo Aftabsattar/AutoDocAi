@@ -1,4 +1,5 @@
-﻿using AutoDocAi.Database;
+﻿using System.Text.Json;
+using AutoDocAi.Database;
 using AutoDocAi.Database.Entities;
 using AutoDocAi.DTOs;
 using AutoDocAi.IGenericRepository;
@@ -137,21 +138,48 @@ public class DocumentController : ControllerBase
         await _appDbContext.SaveChangesAsync();
         return Ok("Data saved successfully");
     }
-     [HttpPost("query")]
-     public async Task<IActionResult> QueryProcessing(string query)
+    [HttpPost("query")]
+    public async Task<IActionResult> QueryProcessing(string query)
+    {
+        if (string.IsNullOrEmpty(query))
         {
-            if (string.IsNullOrEmpty(query))
-            {
-                return BadRequest(new { message = "Query cannot be null or empty" });
-            }
+            return BadRequest(new { message = "Query cannot be null or empty" });
+        }
 
         var generatedQuery = await _queryProcessingRepository.GetQueryProcessingResult(query);
-        var result = await _generateDatabaseQuery.GetResultFromDatabase(generatedQuery);
-        if (result == null)
+
+        var rawResult = await _generateDatabaseQuery.GetResultFromDatabase(generatedQuery);
+
+        if (string.IsNullOrEmpty(rawResult) || rawResult == "[]")
         {
             return NotFound(new { message = "No results found from the query" });
         }
 
-        return Ok(new { result });
+        var resultList = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(rawResult);
+
+        if (resultList != null)
+        {
+            foreach (var row in resultList)
+            {
+                if (row.ContainsKey("Data") && row["Data"] is string dataStr)
+                {
+                    try
+                    {
+                        var parsedData = JsonSerializer.Deserialize<object>(dataStr);
+                        if (parsedData != null)
+                        {
+                            row["Data"] = parsedData;
+                        }
+                    }
+                    catch
+                    {
+                        return Ok(rawResult);
+
+                    }
+                }
+            }
+        }
+
+        return Ok(resultList);
     }
 }
