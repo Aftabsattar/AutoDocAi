@@ -138,6 +138,7 @@ public class DocumentController : ControllerBase
         await _appDbContext.SaveChangesAsync();
         return Ok("Data saved successfully");
     }
+   
     [HttpPost("query")]
     public async Task<IActionResult> QueryProcessing(string query)
     {
@@ -145,41 +146,34 @@ public class DocumentController : ControllerBase
         {
             return BadRequest(new { message = "Query cannot be null or empty" });
         }
-
         var generatedQuery = await _queryProcessingRepository.GetQueryProcessingResult(query);
 
         var rawResult = await _generateDatabaseQuery.GetResultFromDatabase(generatedQuery);
 
-        if (string.IsNullOrEmpty(rawResult) || rawResult == "[]")
+        if (rawResult == null)
         {
             return NotFound(new { message = "No results found from the query" });
         }
 
-        var resultList = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(rawResult);
+        var parsedResult = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(rawResult);
 
-        if (resultList != null)
+        foreach (var row in parsedResult)
         {
-            foreach (var row in resultList)
+            if (row.TryGetValue("Data", out var dataVal) && dataVal is JsonElement elem && elem.ValueKind == JsonValueKind.String)
             {
-                if (row.ContainsKey("Data") && row["Data"] is string dataStr)
+                try
                 {
-                    try
-                    {
-                        var parsedData = JsonSerializer.Deserialize<object>(dataStr);
-                        if (parsedData != null)
-                        {
-                            row["Data"] = parsedData;
-                        }
-                    }
-                    catch
-                    {
-                        return Ok(rawResult);
-
-                    }
+                    var innerObj = JsonSerializer.Deserialize<object>(elem.GetString());
+                    row["Data"] = innerObj;
+                }
+                catch
+                {
+                    // If parsing fails, leave Data as original string
+                    row["Data"] = elem.GetString();
                 }
             }
         }
 
-        return Ok(resultList);
+        return Ok(new { result = parsedResult });
     }
 }

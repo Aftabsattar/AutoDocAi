@@ -26,11 +26,9 @@ namespace AutoDocAi.Repository
             var openAiEndpoint = _config["OpenAi:Endpoint"];
             var openAiApiKey = _config["OpenAi:ApiKey"];
 
-            // Ensure DB connection is open
             if (_dbConnection.State != ConnectionState.Open)
                 _dbConnection.Open();
 
-            // Get distinct schema names (handles both string and array cases)
             string sql = @"
                 SELECT DISTINCT unnest(
                     CASE
