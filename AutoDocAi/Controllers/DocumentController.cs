@@ -3,6 +3,7 @@ using AutoDocAi.Database;
 using AutoDocAi.Database.Entities;
 using AutoDocAi.DTOs;
 using AutoDocAi.IGenericRepository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -72,6 +73,7 @@ public class DocumentController : ControllerBase
     }
 
     [HttpPut("update-document/{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> UpdateDocument(int id, AddDocumnetDTO updateDocumentDTO)
     {
         var document = await _appDbContext.Documents.FindAsync(id);
@@ -88,6 +90,7 @@ public class DocumentController : ControllerBase
     }
 
     [HttpDelete("delete-document/{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteDocument(int id)
     {
         var document = await _appDbContext.Documents.FindAsync(id);
@@ -122,12 +125,12 @@ public class DocumentController : ControllerBase
     }
 
     [HttpPost("scan")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Scan(IFormFile file)
     {
         var result = await _docClient.ProcessAndStoreDocumentAsync(file);
         var structuredJson = await _structuredJsonRepository.RawToStructuredJson(result);
-        // Assuming structuredJson is a string, you need to deserialize it to Dictionary<string, object>
-        var structuredJsonDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(structuredJson);
+        var structuredJsonDict = JsonSerializer.Deserialize<Dictionary<string, object>>(structuredJson);
 
         var document = new Document
         {
