@@ -76,8 +76,6 @@ namespace AutoDocAi.Controllers
         [Authorize]
         public IActionResult Logout()
         {
-            // JWT is stateless; logout is handled client-side by removing the token.
-            // If server-side revocation is needed, implement a token blacklist.
             return Ok(new { message = "Logged out successfully. Remove the token on the client." });
         }
 
